@@ -132,3 +132,7 @@ def test_all():
 
     for t, v in validation.items():
         pydantic.TypeAdapter(t).validate_python(v)
+
+def test_assign():
+    m = IntModel(array=INT_COMBOS[0])
+    m.array[0] = 10

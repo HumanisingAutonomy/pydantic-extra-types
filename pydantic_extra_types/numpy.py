@@ -30,6 +30,7 @@ class _NumPy(Generic[DType]):
     def __get_pydantic_core_schema__(
             cls, source: type[Any],
             handler: GetCoreSchemaHandler) -> core_schema.CoreSchema:
+        
         dtype: npt.DTypeLike = get_args(
             cls.__orig_bases__[0])[0]  # type: ignore
 
@@ -95,13 +96,10 @@ class _NumPyInt64(_NumPy[np.int64]):
     ...
 
 
-NumPyInt8 = Annotated[Union[npt.NDArray[np.int8], npt.ArrayLike], _NumPyInt8]
-NumPyInt16 = Annotated[Union[npt.NDArray[np.int16], npt.ArrayLike],
-                       _NumPyInt16]
-NumPyInt32 = Annotated[Union[npt.NDArray[np.int32], npt.ArrayLike],
-                       _NumPyInt32]
-NumPyInt64 = Annotated[Union[npt.NDArray[np.int64], npt.ArrayLike],
-                       _NumPyInt64]
+NumPyInt8 = Annotated[npt.NDArray[np.int8], _NumPyInt8]
+NumPyInt16 = Annotated[npt.NDArray[np.int16], _NumPyInt16]
+NumPyInt32 = Annotated[npt.NDArray[np.int32], _NumPyInt32]
+NumPyInt64 = Annotated[npt.NDArray[np.int64], _NumPyInt64]
 
 
 ####################################
@@ -123,14 +121,10 @@ class _NumPyUInt64(_NumPy[np.uint64]):
     ...
 
 
-NumPyUInt8 = Annotated[Union[npt.NDArray[np.uint8], npt.ArrayLike],
-                       _NumPyUInt8]
-NumPyUInt16 = Annotated[Union[npt.NDArray[np.uint16], npt.ArrayLike],
-                        _NumPyUInt16]
-NumPyUInt32 = Annotated[Union[npt.NDArray[np.uint32], npt.ArrayLike],
-                        _NumPyUInt32]
-NumPyUInt64 = Annotated[Union[npt.NDArray[np.uint64], npt.ArrayLike],
-                        _NumPyUInt64]
+NumPyUInt8 = Annotated[npt.NDArray[np.uint8], _NumPyUInt8]
+NumPyUInt16 = Annotated[npt.NDArray[np.uint16], _NumPyUInt16]
+NumPyUInt32 = Annotated[npt.NDArray[np.uint32], _NumPyUInt32]
+NumPyUInt64 = Annotated[npt.NDArray[np.uint64], _NumPyUInt64]
 
 
 ####################################
@@ -148,12 +142,9 @@ class _NumPyFloat64(_NumPy[np.float64]):
     ...
 
 
-NumPyFloat16 = Annotated[Union[npt.NDArray[np.float16], npt.ArrayLike],
-                         _NumPyFloat16]
-NumPyFloat32 = Annotated[Union[npt.NDArray[np.float32], npt.ArrayLike],
-                         _NumPyFloat32]
-NumPyFloat64 = Annotated[Union[npt.NDArray[np.float64], npt.ArrayLike],
-                         _NumPyFloat64]
+NumPyFloat16 = Annotated[npt.NDArray[np.float16], _NumPyFloat16]
+NumPyFloat32 = Annotated[npt.NDArray[np.float32], _NumPyFloat32]
+NumPyFloat64 = Annotated[npt.NDArray[np.float64], _NumPyFloat64]
 
 ####################################
 # Complex
@@ -168,10 +159,8 @@ class _NumPyComplex128(_NumPy[np.complex128]):
     ...
 
 
-NumPyComplex64 = Annotated[Union[npt.NDArray[np.complex64], npt.ArrayLike],
-                           _NumPyComplex64]
-NumPyComplex128 = Annotated[Union[npt.NDArray[np.float128], npt.ArrayLike],
-                            _NumPyComplex128]
+NumPyComplex64 = Annotated[npt.NDArray[np.complex64], _NumPyComplex64]
+NumPyComplex128 = Annotated[npt.NDArray[np.float128], _NumPyComplex128]
 
 __all__ = [
     "NumPyInt8", "NumPyInt16", "NumPyInt32", "NumPyInt64", "NumPyUInt8",
