@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from typing import Annotated, Any, ClassVar, Union, List
+from typing import Annotated, Any, ClassVar, Union, List, TypeVar, Generic, TypeVarTuple, get_args
 
 from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler
 from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
+
+import warnings
 
 try:
     import numpy as np
@@ -14,13 +16,15 @@ except ModuleNotFoundError:  # pragma: no cover
         "'NumPy' requires 'numpy' to be installed. You can install it with 'pip install numpy'"
     )
 
+DType = TypeVar('DType', bound=np.generic)
 
-class _NumPy:
+
+class _NumPy(Generic[DType]):
     """
     Base class for numpy scalar types
     """
 
-    np_type: ClassVar[npt.DTypeLike]
+    should_warn = True
 
     @classmethod
     def __get_pydantic_core_schema__(
@@ -28,9 +32,28 @@ class _NumPy:
             handler: GetCoreSchemaHandler) -> core_schema.CoreSchema:
         # max_value = np.iinfo(cls.np_type).max
         # min_value = np.iinfo(cls.np_type).min
+        dtype: npt.DTypeLike = get_args(
+            cls.__orig_bases__[0])[0]  # type: ignore
 
         def _validate_from_list(value: List[Any]) -> npt.NDArray[Any]:
-            return np.array(value, dtype=cls.np_type)
+            arr = np.array(value)
+            int_to_float = (np.issubdtype(arr.dtype, np.integer)
+                            and np.issubdtype(dtype, np.floating))
+            float_to_int = (np.issubdtype(arr.dtype, np.floating)
+                            and np.issubdtype(dtype, np.integer))
+            int_to_uint = (np.any(arr < 0)
+                           and np.issubdtype(dtype, np.unsignedinteger))
+            complex_to_not = (np.issubdtype(arr.dtype, np.complexfloating)
+                              and not np.issubdtype(dtype, np.complexfloating))
+            should_warn = (int_to_float or float_to_int or int_to_uint
+                           or complex_to_not)
+            if should_warn and cls.should_warn:
+                print(cls)
+                cls.should_warn = False
+                warnings.warn(
+                    f'Implicit conversion from {arr.dtype} to {np.dtype(dtype).name}'
+                )
+            return arr.astype(dtype)
 
         from_list_schema = core_schema.chain_schema([
             core_schema.list_schema(),
@@ -55,67 +78,105 @@ class _NumPy:
         return json_schema
 
 
-class _NumPyInt8(_NumPy):
-    np_type = np.int8
+####################################
+# Integers
+####################################
+class _NumPyInt8(_NumPy[np.int8]):
+    ...
 
 
-class _NumPyInt16(_NumPy):
-    np_type = np.int16
+class _NumPyInt16(_NumPy[np.int16]):
+    ...
 
 
-class _NumPyInt32(_NumPy):
-    np_type = np.int32
+class _NumPyInt32(_NumPy[np.int32]):
+    ...
 
 
-class _NumPyInt64(_NumPy):
-    np_type = np.int64
+class _NumPyInt64(_NumPy[np.int64]):
+    ...
 
 
-class _NumPyUInt8(_NumPy):
-    np_type = np.uint8
+NumPyInt8 = Annotated[Union[npt.NDArray[np.int8], npt.ArrayLike], _NumPyInt8]
+NumPyInt16 = Annotated[Union[npt.NDArray[np.int16], npt.ArrayLike],
+                       _NumPyInt16]
+NumPyInt32 = Annotated[Union[npt.NDArray[np.int32], npt.ArrayLike],
+                       _NumPyInt32]
+NumPyInt64 = Annotated[Union[npt.NDArray[np.int64], npt.ArrayLike],
+                       _NumPyInt64]
 
 
-class _NumPyUInt16(_NumPy):
-    np_type = np.uint16
+####################################
+# Unsigned Integers
+####################################
+class _NumPyUInt8(_NumPy[np.uint8]):
+    ...
 
 
-class _NumPyUInt32(_NumPy):
-    np_type = np.uint32
+class _NumPyUInt16(_NumPy[np.uint16]):
+    ...
 
 
-class _NumPyUInt64(_NumPy):
-    np_type = np.uint64
+class _NumPyUInt32(_NumPy[np.uint32]):
+    ...
 
 
-class _NumPyFloat32(_NumPy):
-    np_type = np.float32
+class _NumPyUInt64(_NumPy[np.uint64]):
+    ...
 
 
-class _NumPyFloat64(_NumPy):
-    np_type = np.float64
+NumPyUInt8 = Annotated[Union[npt.NDArray[np.uint8], npt.ArrayLike],
+                       _NumPyUInt8]
+NumPyUInt16 = Annotated[Union[npt.NDArray[np.uint16], npt.ArrayLike],
+                        _NumPyUInt16]
+NumPyUInt32 = Annotated[Union[npt.NDArray[np.uint32], npt.ArrayLike],
+                        _NumPyUInt32]
+NumPyUInt64 = Annotated[Union[npt.NDArray[np.uint64], npt.ArrayLike],
+                        _NumPyUInt64]
 
 
-NumPyInt8 = Annotated[Union[npt.NDArray, npt.ArrayLike], _NumPyInt8]
-NumPyInt16 = Annotated[Union[npt.NDArray, npt.ArrayLike], _NumPyInt16]
-NumPyInt32 = Annotated[Union[npt.NDArray, npt.ArrayLike], _NumPyInt32]
-NumPyInt64 = Annotated[Union[npt.NDArray, npt.ArrayLike], _NumPyInt64]
-NumPyUInt8 = Annotated[Union[npt.NDArray, npt.ArrayLike], _NumPyUInt8]
-NumPyUInt16 = Annotated[Union[npt.NDArray, npt.ArrayLike], _NumPyUInt16]
-NumPyUInt32 = Annotated[Union[npt.NDArray, npt.ArrayLike], _NumPyUInt32]
-NumPyUInt64 = Annotated[Union[npt.NDArray, npt.ArrayLike], _NumPyUInt64]
+####################################
+# Floats
+####################################
+class _NumPyFloat16(_NumPy[np.float16]):
+    ...
 
-NumPyFloat32 = Annotated[Union[npt.NDArray, List[float]], _NumPyFloat32]
-NumPyFloat64 = Annotated[Union[npt.NDArray, List[float]], _NumPyFloat64]
+
+class _NumPyFloat32(_NumPy[np.float32]):
+    ...
+
+
+class _NumPyFloat64(_NumPy[np.float64]):
+    ...
+
+
+NumPyFloat16 = Annotated[Union[npt.NDArray[np.float16], npt.ArrayLike],
+                         _NumPyFloat16]
+NumPyFloat32 = Annotated[Union[npt.NDArray[np.float32], npt.ArrayLike],
+                         _NumPyFloat32]
+NumPyFloat64 = Annotated[Union[npt.NDArray[np.float64], npt.ArrayLike],
+                         _NumPyFloat64]
+
+####################################
+# Complex
+####################################
+
+
+class _NumPyComplex64(_NumPy[np.complex64]):
+    ...
+
+
+class _NumPyComplex128(_NumPy[np.complex128]):
+    ...
+
+
+NumPyComplex64 = Annotated[Union[npt.NDArray[np.complex64], npt.ArrayLike],
+                           _NumPyComplex64]
+NumPyComplex128 = Annotated[Union[npt.NDArray[np.float128], npt.ArrayLike],
+                            _NumPyComplex128]
 
 __all__ = [
-    "NumPyInt8",
-    "NumPyInt16",
-    "NumPyInt32",
-    "NumPyInt64",
-    "NumPyUInt8",
-    "NumPyUInt16",
-    "NumPyUInt32",
-    "NumPyUInt64",
-    "NumPyFloat32",
-    "NumPyFloat64",
+    "NumPyInt8", "NumPyInt16", "NumPyInt32", "NumPyInt64", "NumPyUInt8",
+    "NumPyUInt16", "NumPyUInt32", "NumPyUInt64", "NumPyFloat16",
+    "NumPyFloat32", "NumPyFloat64", "NumPyComplex64", "NumPyComplex128"
 ]
