@@ -30,8 +30,6 @@ class _NumPy(Generic[DType]):
     def __get_pydantic_core_schema__(
             cls, source: type[Any],
             handler: GetCoreSchemaHandler) -> core_schema.CoreSchema:
-        # max_value = np.iinfo(cls.np_type).max
-        # min_value = np.iinfo(cls.np_type).min
         dtype: npt.DTypeLike = get_args(
             cls.__orig_bases__[0])[0]  # type: ignore
 
