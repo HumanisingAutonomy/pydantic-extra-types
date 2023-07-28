@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from typing import Annotated, Any, ClassVar, Union, List, TypeVar, Generic, TypeVarTuple, get_args
+import collections.abc
 
 from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler
 from pydantic.json_schema import JsonSchemaValue
-from pydantic_core import core_schema
+from pydantic_core import core_schema, PydanticCustomError
 
 import warnings
 
@@ -35,6 +36,8 @@ class _NumPy(Generic[DType]):
             cls.__orig_bases__[0])[0]  # type: ignore
 
         def _validate_from_list(value: List[Any]) -> npt.NDArray[Any]:
+            if not isinstance(value, (collections.abc.Sequence, np.ndarray)):
+                raise PydanticCustomError("numpy_array", f"Expected sequence")
             arr = np.array(value)
             int_to_float = (np.issubdtype(arr.dtype, np.integer)
                             and np.issubdtype(dtype, np.floating))
@@ -54,10 +57,7 @@ class _NumPy(Generic[DType]):
                 )
             return arr.astype(dtype)
 
-        from_list_schema = core_schema.chain_schema([
-            core_schema.list_schema(),
-            core_schema.no_info_plain_validator_function(_validate_from_list),
-        ])
+        from_list_schema = core_schema.no_info_plain_validator_function(_validate_from_list)
 
         json_schema = from_list_schema
 
