@@ -50,7 +50,6 @@ class _NumPy(Generic[DType]):
             should_warn = (int_to_float or float_to_int or int_to_uint
                            or complex_to_not)
             if should_warn and cls.should_warn:
-                print(cls)
                 cls.should_warn = False
                 warnings.warn(
                     f'Implicit conversion from {arr.dtype} to {np.dtype(dtype).name}'
