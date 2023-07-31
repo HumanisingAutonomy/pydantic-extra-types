@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated, Any, ClassVar, Union, List, TypeVar, Generic, TypeVarTuple, get_args
+from typing import Annotated, Any, ClassVar, Union, List, TypeVar, Generic, get_args
 
 from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler
 from pydantic.json_schema import JsonSchemaValue
